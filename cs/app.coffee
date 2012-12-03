@@ -1,11 +1,9 @@
-YieldHelper = (path, container, context=new Batman.View) ->
-  # if context is 'hide'
-  #   context.html = ''
-  #   context.source = ''
-  # else
-  # console.log context
-  # context.render {source: path, into: 'article'}
-    # $(".modal").modal()
+YieldHelper = (source, container, context=new Batman.View) ->
+  config = into: container
+  config[if source.indexOf('<') isnt -1 then 'html' else 'source'] = source
+
+  context.render config
+
 class @YieldDemo extends Batman.App
 
   @title = "Batman Yield Views Demo"
@@ -18,11 +16,10 @@ class @YieldDemo extends Batman.App
   @resources 'main'
 
   @route 'viewLesson/:lessonId', 'article#viewLesson'
+  @route 'article/:articleId/lesson/:lessonId', 'article#viewLesson'
 
   @root 'main#index'
 
-
-  # here and below is automatically generated
   @on 'run', ->
     console?.log "Running ...."
 
@@ -43,18 +40,6 @@ class YieldDemo.Article extends Batman.Model
 
   @encode 'content'
 
-class YieldDemo.MainView extends Batman.View
-  constructor: ->
-    super
-    console.log 'imma view!'
-
-class YieldDemo.LessonController extends Batman.Controller
-  routingKey: 'lessons'
-
-  constructor: ->
-    console.log 'LessonController loaded'
-    super
-
 class YieldDemo.MainController extends Batman.Controller
   routingKey: 'main'
 
@@ -64,8 +49,8 @@ class YieldDemo.MainController extends Batman.Controller
     @navController = new YieldDemo.NavigatonController
 
     @clearArticles()
-    @articles = @loadArticles()
-    @article = @articles.toArray()[0]
+    @loadArticles (articles) =>
+      @article = @currentArticle = articles.toArray()[0]
 
   clearArticles: ->
     YieldDemo.Article.load (err, articles) ->
@@ -73,12 +58,13 @@ class YieldDemo.MainController extends Batman.Controller
     YieldDemo.Lesson.load (err, lessons) ->
       lessons?.forEach (lesson) -> lesson.destroy()
 
-  loadArticles: ->
+  loadArticles: (cb) ->
+    allArticles = null
     YieldDemo.Article.load (err, articles) ->
       if not articles?.length
-        lesson1 = new YieldDemo.Lesson(source: 'first', name: 'Lesson 1')
-        lesson2 = new YieldDemo.Lesson(source: 'second', name: 'Lesson 2')
-        lesson3 = new YieldDemo.Lesson(source: 'third', name: 'Lesson 3')
+        lesson1 = new YieldDemo.Lesson(source: 'lessons/first', name: 'Lesson 1')
+        lesson2 = new YieldDemo.Lesson(source: 'lessons/second', name: 'Lesson Two')
+        lesson3 = new YieldDemo.Lesson(source: 'lessons/third', name: 'Lesson C')
         lesson1.save()
         lesson2.save()
         lesson3.save()
@@ -88,30 +74,22 @@ class YieldDemo.MainController extends Batman.Controller
         article.get('lessons').add lesson2
         article.get('lessons').add lesson3
 
-        article.save()
+        cb?(new Batman.Set(article))
 
-    YieldDemo.Article.get 'all'
-
-  index: ->
-    YieldDemo.Article.find 1, (err, article) =>
-      @showArticle(article)
+  index: (args) ->
+    firstLesson = @currentArticle.get('lessons').toArray()[0]
+    firstLesson.set 'active', true
+    @articleController.viewLesson firstLesson.get('id')
 
   showArticle: (article) ->
     lessons = article.get('lessons')
-    console.log lessons
-    firstLesson = lessons.toArray()[0]
-    console.log firstLesson
 
+    firstLesson = lessons.toArray()[0]
     firstLesson.set 'active', true
     source = firstLesson.get('source')
-    @navController.set 'lessons', lessons
-    console.log 'len', lessons.length
-    # @article = YieldHelper 'articles/first', 'artticle', @
-    # @mainView = new YieldDemo.MainView()
-    # articleController.dispatch 'viewArticle', 'articles/first'
-    # articleController = YieldDemo.ArticleController.get('sharedController')
-    @articleController.viewArticle  "articles/#{source}"
-    # @shit = 'poop'
+
+    @currentArticle = article
+    @articleController.viewArticle source
 
 class YieldDemo.ArticleController extends Batman.Controller
   routingKey: 'article'
@@ -130,16 +108,20 @@ class YieldDemo.ArticleController extends Batman.Controller
 
     @render config
 
-  viewLesson: ->
-    console.log 'viewLesson', arguments
+  viewLesson: (lessonId) ->
+    lessonId = {lessonId: lessonId} unless Batman.typeOf(lessonId) is 'Object'
+    lesson = YieldDemo.Lesson.find lessonId.lessonId, (err, lesson) =>
+      console.error err if err
+      @viewArticle lesson.get 'source' if lesson
+      # @render lesson.get('source')
+      # YieldHelper("articles/#{lesson.get('source')}", 'article', @)
 
-    @render false
+    # @render false
 
   @::on 'rendered', ->
     console.log 'I HAZ DONE RENDERING'
 
-class YieldDemo.NavigatonController extends Batman.Controller
-  constructor: ->
-    super
-    # @render view: new Batman.View( html: "<h2>OHMAN NAV</h2>"), into: 'nav'
+class YieldDemo.LessonController extends Batman.Controller
+  routingKey: 'lessons'
 
+class YieldDemo.NavigatonController extends Batman.Controller

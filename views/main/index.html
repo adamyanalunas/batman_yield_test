@@ -1,10 +1,10 @@
-<h2>This is the main view</h2>
+<h2>Article View</h2>
 
-<!-- <span data-bind="shit" data-hideif->BUT, BUT</span> -->
-<nav showif="navController.articles" class="navbar navbar-inverse">
+<nav showif="currentArticle.lessons" class="navbar navbar-inverse">
   <div class="navbar-inner">
     <ul class="nav">
-      <li data-foreach-lesson="navController.lessons" data-addclass-active="lesson.active" data-bind-article="article">
+      <li data-foreach-lesson="currentArticle.lessons" data-addclass-active="lesson.active">
+        <!-- <a data-bind="lesson.name" data-route="routes.lesson[lesson.id]"></a> -->
         <a data-bind="lesson.name" data-route="routes.viewLesson[lesson.id]"></a>
       </li>
     </ul>
