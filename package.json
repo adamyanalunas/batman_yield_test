@@ -1,0 +1,11 @@
+{ "name": "YieldTest"
+, "version": "0.0.1"
+, "dependencies": {
+  }
+  , "devDependencies": {
+  }
+, "private": "true"
+, "scripts": {
+    "start": "python -m SimpleHTTPServer"
+  }
+}
