@@ -2,7 +2,6 @@ class YieldDemo.MainController extends Batman.Controller
   routingKey: 'main'
 
   constructor: ->
-    # @articleController = new YieldDemo.ArticleController container: 'articles'
     @articleController = new YieldDemo.ArticleController
     @navController = new YieldDemo.NavigatonController
 
@@ -41,64 +40,34 @@ class YieldDemo.MainController extends Batman.Controller
     @articleController.viewLesson firstLesson
     return false
 
-  ready: ->
-    console.log 'big daddy is ready'
-  # showArticle: (article) ->
-  #   lessons = article.get('lessons')
-
-  #   firstLesson = lessons.toArray()[0]
-  #   firstLesson.set 'active', true
-  #   source = firstLesson.get('source')
-
-  #   @currentArticle = article
-  #   YieldDemo.YieldHelper(source, 'article', @articleController)
-
 class YieldDemo.ArticleController extends Batman.Controller
   routingKey: 'article'
 
   constructor: (options) ->
     @setup options
     super
-    # view = @render()
-    # view.on 'ready', =>
-    #   console.log 'article view is ready?'
 
   @accessor 'lessons',
     get: ->
       @get('article.lessons')
 
   setup: (options) ->
-    # @set 'container', options?.container
     @set 'article', options?.article
-    # @prepLesson()
-
-  # prepLesson: ->
-  #   @articleView = new YieldDemo.ArticleView
-  #   @articleView.on 'lessonLoaded', (renderedLesson) =>
 
   render: ->
     view = super
-    console.log 'rendering ', view
     view.on 'ready', =>
-      console.log 'reeeaaddy'
       @fire 'lessonLoaded'
     view
 
   viewLesson: (lesson) ->
-    @get('lessons').forEach (inactiveLesson) ->
+    YieldDemo.Lesson.get('all').forEach (inactiveLesson) ->
       inactiveLesson.unset 'active'
+      # Overwrite given lesson with full lesson data
+      if lesson.id and parseInt(lesson.id, 10) == inactiveLesson.get('id')
+        lesson = inactiveLesson
     lesson.set 'active', true
-    @view = @render into: 'article', source: lesson.get('source')
-
-  # viewLessonOld: (lesson) ->
-  #   @articleView.set 'node', $('article').get(0)
-  #   @articleView.viewLesson lesson
-  #   @get('lessons').forEach (inactiveLesson) ->
-  #     inactiveLesson.unset 'active'
-  #   lesson.set 'active', true
-
-  # @::on 'ready  ', ->
-  #   console.log 'I HAZ DONE RENDERING'
+    @render into: 'article', source: lesson.get('source')
 
 class YieldDemo.LessonController extends Batman.Controller
   routingKey: 'lessons'

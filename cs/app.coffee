@@ -9,8 +9,7 @@ class @YieldDemo extends Batman.App
   @resources 'lessons'
   @resources 'main'
 
-  @route 'viewLesson/:lessonId', 'article#viewLesson'
-  @route 'article/:articleId/lesson/:lessonId', 'article#viewLesson'
+  @route 'viewLesson/:id', 'article#viewLesson'
 
   @root 'main#index'
 
