@@ -1,19 +1,13 @@
-<h2>Article View</h2>
+<h2>
+  <a data-route="routes.mains">Article View</a>
+</h2>
 
 <nav showif="currentArticle.lessons" class="navbar navbar-inverse">
   <div class="navbar-inner">
     <ul class="nav">
       <li data-foreach-lesson="currentArticle.lessons" data-addclass-active="lesson.active">
-        <!-- <a data-bind="lesson.name" data-route="routes.lesson[lesson.id]"></a> -->
-        <!-- <a data-bind="lesson.name" data-click="currentArticle.viewLesson[lesson.id]"></a> -->
         <a data-bind="lesson.name" data-route="routes.viewLesson[lesson]"></a>
-        <!-- <a data-bind="lesson.name | append currentArticle.content" data-route="routes.articles[currentArticle.id].lessons[lesson.id]"></a> -->
       </li>
     </ul>
   </div>
 </nav>
-<!-- <article id="article" data-view="ArticleView" data-yield="article"></article> -->
-<!-- <article id="article" data-yield="article"></article> -->
-<!-- <div data-view="lesson">
-</div>
- -->

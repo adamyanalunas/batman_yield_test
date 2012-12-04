@@ -3,12 +3,16 @@ class YieldDemo.MainController extends Batman.Controller
 
   constructor: ->
     @articleController = new YieldDemo.ArticleController
-    @navController = new YieldDemo.NavigatonController
+    @articleController.on 'lessonLoaded', (lesson) ->
+      console.log 'OHAY, I LOADED LESSON #', lesson.get('id'), lesson
 
     @clearArticles()
     @loadArticles (articles) =>
       @article = @currentArticle = articles.toArray()[0]
       @articleController.set 'article', @article
+
+  renderMain: ->
+    @render source: 'main/index', into: 'main', conext: @
 
   clearArticles: ->
     YieldDemo.Article.load (err, articles) ->
@@ -36,9 +40,14 @@ class YieldDemo.MainController extends Batman.Controller
         cb?(new Batman.Set(article))
 
   index: (args) ->
-    firstLesson = @currentArticle.get('lessons').toArray()[0]
-    @articleController.viewLesson firstLesson
-    return false
+    @viewLesson id: 1
+
+  viewLesson: (options) ->
+    @renderMain()
+    @currentArticle.get('lessons').forEach (lesson) =>
+      # This is implementation-specific
+      if lesson.get('id') == parseInt(options.id, 10)
+        @articleController.viewLesson lesson
 
 class YieldDemo.ArticleController extends Batman.Controller
   routingKey: 'article'
@@ -52,24 +61,20 @@ class YieldDemo.ArticleController extends Batman.Controller
       @get('article.lessons')
 
   setup: (options) ->
+    @unset 'activeLesson'
     @set 'article', options?.article
 
   render: ->
     view = super
     view.on 'ready', =>
-      @fire 'lessonLoaded'
+      # Could use @accessor here to @lessons.filter
+      @fire 'lessonLoaded', @get('activeLesson')
     view
 
   viewLesson: (lesson) ->
-    YieldDemo.Lesson.get('all').forEach (inactiveLesson) ->
+    @get('lessons').forEach (inactiveLesson) ->
       inactiveLesson.unset 'active'
-      # Overwrite given lesson with full lesson data
-      if lesson.id and parseInt(lesson.id, 10) == inactiveLesson.get('id')
-        lesson = inactiveLesson
     lesson.set 'active', true
-    @render into: 'article', source: lesson.get('source')
-
-class YieldDemo.LessonController extends Batman.Controller
-  routingKey: 'lessons'
-
-class YieldDemo.NavigatonController extends Batman.Controller
+    # This could be moved to an @accessor
+    @set 'activeLesson', lesson
+    @render into: 'article', source: lesson.get('source'), context: @

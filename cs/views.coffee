@@ -11,9 +11,13 @@ class YieldDemo.ArticleView extends Batman.View
     super
 
   viewLesson: (lesson) ->
+    @_rendered = false
     console.log 'viewLesson', lesson
     # @render source: "#{lesson.get('source')}.html", into: 'article'
-    @render source: '<h3>poo pants</h3>', into: 'article'
+    @render
+
+  render: ->
+    super
 
   ready: ->
     node = @get('node')
