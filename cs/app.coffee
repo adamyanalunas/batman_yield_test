@@ -1,3 +1,6 @@
+# Batman.config.usePushState = yes
+# Batman.config.pathPrefix = '/'
+
 class @YieldDemo extends Batman.App
 
   @title = "Batman Yield Views Demo"
@@ -10,6 +13,7 @@ class @YieldDemo extends Batman.App
   @resources 'main'
 
   @route 'viewLesson/:id', 'main#viewLesson'
+  @route 'home', 'main#index'
 
   @root 'main#index'
 
