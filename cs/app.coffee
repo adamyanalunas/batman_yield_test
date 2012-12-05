@@ -12,7 +12,8 @@ class @YieldDemo extends Batman.App
   @resources 'lessons'
   @resources 'main'
 
-  @route 'viewLesson/:id', 'main#viewLesson'
+  # @route 'viewLesson/:id', 'main#viewLesson'
+  # @route 'articles/:article_id/lessons/:lesson_id', 'main#viewArticleLesson'
   @route 'home', 'main#index'
 
   @root 'main#index'
@@ -21,4 +22,4 @@ class @YieldDemo extends Batman.App
   #   console?.log "Running ...."
 
   # @on 'ready', ->
-  #   console?.log "#{@name} ready for use."
+  #   console?.log "#{@name} ready for use."'

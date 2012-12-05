@@ -1,14 +1,1 @@
-<h2>
-  <a data-route="routes.home">Article View</a>
-</h2>
-
-<!-- TODO: Move to article/index to make intention appropriate -->
-<nav showif="currentArticle.lessons" class="navbar navbar-inverse">
-  <div class="navbar-inner">
-    <ul class="nav">
-      <li data-foreach-lesson="currentArticle.lessons" data-addclass-active="lesson.active">
-        <a data-bind="lesson.name" data-route="routes.viewLesson[lesson]"></a>
-      </li>
-    </ul>
-  </div>
-</nav>
+<h2><a data-route="routes.home" data-bind="currentArticle.title">Article View</a></h2>
