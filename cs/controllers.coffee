@@ -2,15 +2,37 @@ class YieldDemo.MainController extends Batman.Controller
   routingKey: 'main'
 
   constructor: ->
-    @articleController = new YieldDemo.ArticleController
-    @articleController.on 'lessonLoaded', (lesson) ->
-      console.log 'OHAY, I LOADED LESSON #', lesson.get('id')#, lesson
+    @set 'articleController', new YieldDemo.ArticleController
+    @get('articleController').on 'lessonLoaded', (lesson) ->
+      console.log 'OHAY, I LOADED LESSON #', lesson.get('id'), ' for article #', lesson.get('article.id')
 
     @clearArticles()
     @loadArticles (articles) =>
-      @article = @currentArticle = articles.toArray()[0]
-      @articleController.set 'article', @article
+      @set 'articles', articles
+      # This feels bad
+      params = YieldDemo.get('currentParams')
+      articleId = parseInt(params.get('articleId') ? 1, 10)
+
+      foundArticle = articles.find (article) ->
+        article if article.get('id') == articleId
+
+      @set 'currentArticle', foundArticle ? articles.get('first')
+      @get('articleController').set 'article', @get('currentArticle')
+      # @set 'tocController', new YieldDemo.TocController(articles: articles)
       @viewArticle
+
+  switchArticle: (options) ->
+    console.log 'switchArticle', options.id
+    id = parseInt(options.id, 10)
+    console.log 'id', id
+    foundArticle = @get('articles').find (article) ->
+      article if article.get('id') == id
+
+    # TODO: Look at all the forcing I have to do. Move this to more data bound stuff
+    @set 'currentArticle', foundArticle
+    @set('articleController.article', foundArticle)
+    @index()
+    # Batman.redirect '/home'
 
   renderMain: ->
     @render source: 'main/index', into: 'main', conext: @
@@ -26,24 +48,32 @@ class YieldDemo.MainController extends Batman.Controller
     YieldDemo.Article.load (err, articles) ->
       if not articles?.length
         dogLessons = YieldDemo.Lesson::generateDogs()
-        dogArticle = new YieldDemo.Article title: 'DOGZ RULE, CATS DRUL!', lessons: dogLessons, blurb: 'Talk about dogs'
+        dogArticle = new YieldDemo.Article title: 'DOGZ RULE CATS DRULE!', lessons: dogLessons, blurb: 'Talk about dogs'
         dogArticle.save()
 
         catLessons = YieldDemo.Lesson::generateCats()
-        catArticle = new YieldDemo.Article title: 'Clearly cats are superior', lessons: catLessons, blurb: 'Talk about cats'
+        catArticle = new YieldDemo.Article title: 'Cats, clearly, are superior', lessons: catLessons, blurb: 'Talk about cats'
         catArticle.save()
 
         cb?(new Batman.Set(dogArticle, catArticle))
 
   index: (args) ->
-    @viewLesson id: 1
+    firstLesson = @get('currentArticle.lessons').find (lesson) ->
+      lesson if lesson.get('id') != undefined
+    @viewLesson id: firstLesson.get('id')
 
   viewLesson: (options) ->
     @renderMain()
-    @currentArticle.get('lessons').forEach (lesson) =>
-      # This is implementation-specific
-      if lesson.get('id') == parseInt(options.id, 10)
-        @articleController.viewLesson lesson
+
+    lessonId = parseInt(options.id, 10)
+    lesson = @get('currentArticle.lessons').find (lesson) =>
+      lesson if lesson.get('id') == lessonId
+
+    if lesson
+      @get('articleController').viewLesson lesson
+    else
+      console.log 'redirect to id', @get('currentArticle.id'), 'from', @get('currentArticle')
+      Batman.redirect 'articles/' + @get('currentArticle.id')
 
   # viewArticleLesson: (options) ->
   #   console.log 'viewArticleLesson', options
@@ -66,7 +96,6 @@ class YieldDemo.ArticleController extends Batman.Controller
 
   render: (options) ->
     view = super
-    console.log 'article render', options
     view.on 'ready', =>
       # Could use @accessor here to @lessons.filter
       @fire 'lessonLoaded', @get('activeLesson')
@@ -90,6 +119,7 @@ class YieldDemo.LessonsController extends Batman.Controller
 
   show: (options) ->
     mc = YieldDemo.MainController.get('sharedController')
+    # mc.switchArticle id: options.articleId
     mc.viewLesson id: options.id
 
   viewLesson: (lesson) ->
@@ -102,3 +132,15 @@ class YieldDemo.LessonsController extends Batman.Controller
       # Could use @accessor here to @lessons.filter
       @fire 'lessonLoaded'
     view
+
+class YieldDemo.TocController extends Batman.Controller
+  routingKey: 'toc'
+
+  constructor: (options) ->
+    @set 'articles', options.articles
+    # console.log 'toc article', @articles
+    @render into: 'toc', context: @, source: '<p>poop</p>'
+
+  render: ->
+    console.log 'wee render'
+    super
