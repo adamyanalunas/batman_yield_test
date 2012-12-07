@@ -2,7 +2,6 @@
   <div class="navbar-inner">
     <ul class="nav">
       <li data-foreach-lesson="article.lessons" data-addclass-active="lesson.active">
-        <!-- <a data-bind="lesson.name" data-route="routes.viewLesson[lesson]" data-hideif="lesson.id | not ''"></a> -->
         <a data-bind="lesson.name" data-route="routes.articles[article].lessons[lesson]" data-hideif="lesson.id | not ''"></a>
       </li>
     </ul>

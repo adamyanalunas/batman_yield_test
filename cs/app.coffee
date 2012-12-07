@@ -12,8 +12,6 @@ class @YieldDemo extends Batman.App
   @resources 'lessons'
   @resources 'main'
 
-  # @route 'viewLesson/:id', 'main#viewLesson'
-  # @route 'articles/:article_id/lessons/:lesson_id', 'main#viewArticleLesson'
   @route 'home', 'main#index'
 
   @root 'main#index'

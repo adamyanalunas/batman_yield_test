@@ -35,3 +35,28 @@ class YieldDemo.Article extends Batman.Model
   @persist Batman.LocalStorage
 
   @encode 'content'
+
+  @::generateDogArticle = ->
+    dogLessons = YieldDemo.Lesson::generateDogs()
+    dogArticle = new Article(
+      type: 'dog'
+      title: 'DOGZ RULE CATS DRULE!'
+      lessons: dogLessons
+      blurb: 'Talk about dogs'
+    )
+    dogArticle.save()
+
+    dogArticle
+
+  @::generateCatArticle = ->
+    catLessons = YieldDemo.Lesson::generateCats()
+    catArticle = new YieldDemo.Article(
+      type: 'cat'
+      title: 'Cats, clearly, are superior'
+      lessons: catLessons
+      blurb: 'Talk about cats'
+    )
+    catArticle.save()
+
+    catArticle
+
