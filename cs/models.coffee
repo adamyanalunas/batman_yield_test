@@ -4,7 +4,7 @@ class YieldDemo.Lesson extends Batman.Model
   @belongsTo 'article'
   @persist Batman.LocalStorage
 
-  @encode 'source', 'name'
+  @encode '_id', 'source', 'name'
 
   @::generateDogs = ->
     lesson1 = new Lesson(source: 'lessons/first', name: 'Lesson 1')
@@ -34,7 +34,7 @@ class YieldDemo.Article extends Batman.Model
   @primaryKey: '_id'
   @persist Batman.LocalStorage
 
-  @encode 'content'
+  @encode '_id', 'type', 'title', 'blurb'
 
   @::generateDogArticle = ->
     dogLessons = YieldDemo.Lesson::generateDogs()
@@ -42,7 +42,7 @@ class YieldDemo.Article extends Batman.Model
       type: 'dog'
       title: 'DOGZ RULE CATS DRULE!'
       lessons: dogLessons
-      blurb: 'Talk about dogs'
+      blurb: 'Dogs just wanna have fun!'
     )
     dogArticle.save()
 
@@ -54,7 +54,7 @@ class YieldDemo.Article extends Batman.Model
       type: 'cat'
       title: 'Cats, clearly, are superior'
       lessons: catLessons
-      blurb: 'Talk about cats'
+      blurb: 'The master race'
     )
     catArticle.save()
 

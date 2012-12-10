@@ -12,3 +12,7 @@ h2 {
   top: 2.3em;
   min-width: 10em;
 }
+
+aside {
+  font-style: italic;
+}
