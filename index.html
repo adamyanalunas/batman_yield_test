@@ -9,10 +9,18 @@
 
   <div id="content" data-yield="main" class="container"></div>
   <article id="article" data-yield="article" class="container"></article>
-  <article id="lesson" data-yield="lesson" class="container"></article>
+  <nav class="toc well">
+    <ul class="nav nav-list">
+      <li class="nav-header">Articles</li>
+      <li data-foreach-article="articles" data-addclass="article.active">
+        <a data-bind="article.type | pluralize | humanize" data-bind-id="article.id" data-route="routes.articles[article]"></a>
+      </li>
+    </ul>
+  </nav>
 
   <script src="js/jquery-1.8.3.min.js"></script>
   <script src="js/batman.jquery.js"></script>
+  <script src="dist/js/namespace.js"></script>
   <script src="dist/js/app.js"></script>
   <script src="dist/js/models.js"></script>
   <script src="dist/js/controllers.js"></script>

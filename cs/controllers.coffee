@@ -2,75 +2,23 @@ class YieldDemo.MainController extends Batman.Controller
   routingKey: 'main'
 
   constructor: ->
-    @set 'articleController', new YieldDemo.ArticleController
-    @get('articleController').on 'lessonLoaded', (lesson) ->
+    console.log 'WUT'
+    # @set 'articlesController', new YieldDemo.ArticlesController
+    YieldDemo.ArticlesController.get('sharedController').on 'lessonLoaded', (lesson) ->
       console.log 'OHAY, I LOADED LESSON #', lesson.get('id'), ' for article #', lesson.get('article.id')
 
-    @clearArticles()
-    @loadArticles (articles) =>
-      @set 'articles', articles
-      # This feels bad
-      params = YieldDemo.get('currentParams')
-      articleId = parseInt(params.get('articleId') ? 1, 10)
-
-      foundArticle = articles.find (article) ->
-        article if article.get('id') == articleId
-
-      @set 'currentArticle', foundArticle ? articles.get('first')
-      @get('articleController').set 'article', @get('currentArticle')
-      @viewArticle
-
-  switchArticle: (options) ->
-    id = parseInt(options.id, 10)
-    foundArticle = @get('articles').find (article) ->
-      article if article.get('id') == id
-
-    # TODO: Look at all the forcing I have to do. Move this to more data bound stuff
-    @set 'currentArticle', foundArticle
-    @set('articleController.article', foundArticle)
-    @index()
-
-  renderMain: ->
-    @render source: 'main/index', into: 'main', conext: @
-
-  showFirstLesson: ->
-    firstLesson = @get('currentArticle.lessons').find (lesson) ->
-      lesson if lesson.get('id') != undefined
-    @viewLesson id: firstLesson.get('id')
-
-  clearArticles: ->
-    YieldDemo.Lesson.load (err, lessons) ->
-      lessons?.forEach (lesson) -> lesson.destroy()
-    YieldDemo.Article.load (err, articles) ->
-      articles?.forEach (article) -> article.destroy()
-
-  # Substitute this with calls to a real db
-  loadArticles: (cb) ->
-    YieldDemo.Article.load (err, articles) ->
-      if not articles?.length
-        dogArticle = YieldDemo.Article::generateDogArticle()
-        catArticle = YieldDemo.Article::generateCatArticle()
-
-        cb?(new Batman.Set(dogArticle, catArticle))
-
   index: (args) ->
-    @showFirstLesson()
 
-  viewLesson: (options) ->
-    @renderMain()
+class YieldDemo.ArticlesController extends Batman.Controller
+  @beforeFilter (options) =>
+    if options.action == 'show'
+      @fire 'willShow', options
 
-    lessonId = parseInt(options.id, 10)
-    lesson = @get('currentArticle.lessons').find (lesson) =>
-      lesson if lesson.get('id') == lessonId
+  @afterFilter (options) =>
+    if options.action == 'show'
+      @fire 'didShow', options
 
-    if lesson
-      @get('articleController').viewLesson lesson
-    else
-      console.log 'redirect to id', @get('currentArticle.id'), 'from', @get('currentArticle')
-      Batman.redirect 'articles/' + @get('currentArticle.id')
-
-class YieldDemo.ArticleController extends Batman.Controller
-  routingKey: 'article'
+  routingKey: 'articles'
 
   constructor: (options) ->
     @setup options
@@ -80,38 +28,66 @@ class YieldDemo.ArticleController extends Batman.Controller
     get: ->
       @get('article.lessons')
 
+  @accessor 'activeLesson',
+    get: ->
+      activeLesson = @get('lessons').find (lesson) ->
+        lesson if lesson.get('active') == true
+
+      activeLesson
+
   setup: (options) ->
-    @unset 'activeLesson'
+    @set 'articles', YieldDemo.Article.get('all')
+    # @set 'articles', YieldDemo.get('articles')
     @set 'article', options?.article
-    @set 'lessonController', new YieldDemo.LessonsController
+    # lessonController = new YieldDemo.LessonsController
+    lessonController = YieldDemo.LessonsController.get('sharedController')
+    # lessonController.articlesController = @
+    @set 'lessonController', lessonController
+    console.log 'lc', @get('lessonController')
 
   render: (options) ->
     view = super
     view.on 'ready', =>
-      # Could use @accessor here to @lessons.filter
       @fire 'lessonLoaded', @get('activeLesson')
     view
 
   show: (options) ->
-    console.log 'article show', options
+    @switchArticle options
 
-  viewLesson: (lesson) ->
-    @get('lessons').forEach (inactiveLesson) ->
+  viewLesson: (options) ->
+    # Loading from the model will break the data binding.
+    # Use the current article to preserve binding.
+    lesson = @get('article.lessons').find (lesson) =>
+      @set 'lesson', lesson if lesson.get('id') == parseInt(options.id, 10)
+
+    unless @get('lesson')
+      return Batman.redirect '/home'
+
+    @get('article.lessons').forEach (inactiveLesson) ->
       inactiveLesson.unset 'active'
     lesson.set 'active', true
-    # This could be moved to an @accessor
-    @set 'activeLesson', lesson
+
     # TODO: This is bad
     @render into: 'article', source: 'articles/show', context: @
     @get('lessonController').viewLesson lesson
+
+  switchArticle: (options) ->
+    foundArticle = @get('articles').find (article) =>
+      @set('article', article) if article.get('id') == parseInt(options.id, 10)
+
+    console.log foundArticle
+    foundArticle.set 'active', true
 
 class YieldDemo.LessonsController extends Batman.Controller
   routingKey: 'lessons'
 
   show: (options) ->
-    mc = YieldDemo.MainController.get('sharedController')
-    # mc.switchArticle id: options.articleId
-    mc.viewLesson id: options.id
+    # ac = YieldDemo.ArticlesController.get('sharedController')
+    ac = @get('articlesController')
+    console.log 'ac', ac
+    console.log 'alternative', @articlesController
+    ac.switchArticle id: options.articleId
+    ac.viewLesson id: options.id
 
   viewLesson: (lesson) ->
     @render into: 'lesson', source: lesson.get('source'), context: @
