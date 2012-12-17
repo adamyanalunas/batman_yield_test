@@ -10,6 +10,7 @@ class @YieldDemo extends Batman.App
   # TODO: Build custom route to replace all @resource routes
   @resources 'articles', ->
     @resources 'lessons'
+  @resources 'main'
 
   # @route 'home', 'main#index'
 

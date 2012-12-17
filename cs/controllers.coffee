@@ -2,90 +2,103 @@ class YieldDemo.MainController extends Batman.Controller
   routingKey: 'main'
 
   constructor: ->
-    console.log 'WUT'
     # @set 'articlesController', new YieldDemo.ArticlesController
-    YieldDemo.ArticlesController.get('sharedController').on 'lessonLoaded', (lesson) ->
+    YieldDemo.ArticlesController.get('sharedController').on 'articleLoaded', (lesson) ->
       console.log 'OHAY, I LOADED LESSON #', lesson.get('id'), ' for article #', lesson.get('article.id')
 
   index: (args) ->
 
 class YieldDemo.ArticlesController extends Batman.Controller
-  @beforeFilter (options) =>
-    if options.action == 'show'
-      @fire 'willShow', options
+  # @beforeFilter (options) =>
+  #   if options.action == 'show'
+  #     @fire 'willShow', options
 
-  @afterFilter (options) =>
-    if options.action == 'show'
-      @fire 'didShow', options
+  # @afterFilter (options) =>
+  #   if options.action == 'show'
+  #     @fire 'didShow', options
 
   routingKey: 'articles'
 
   constructor: (options) ->
     @setup options
-    super
+    super options
 
-  @accessor 'lessons',
-    get: ->
-      @get('article.lessons')
+  # @accessor 'lessons',
+  #   get: ->
+  #     @get('article.lessons')
 
-  @accessor 'activeLesson',
-    get: ->
-      activeLesson = @get('lessons').find (lesson) ->
-        lesson if lesson.get('active') == true
+  # @accessor 'activeLesson',
+  #   get: ->
+  #     activeLesson = @get('lessons').find (lesson) ->
+  #       lesson if lesson.get('active') == true
 
-      activeLesson
+  #     activeLesson
 
-  setup: (options) ->
+  setup: (options = {}) ->
     @set 'articles', YieldDemo.Article.get('all')
-    # @set 'articles', YieldDemo.get('articles')
-    @set 'article', options?.article
-    # lessonController = new YieldDemo.LessonsController
-    lessonController = YieldDemo.LessonsController.get('sharedController')
-    # lessonController.articlesController = @
-    @set 'lessonController', lessonController
-    console.log 'lc', @get('lessonController')
+
+    @set 'lessonController', options.lessonController
+    unless options.lessonController
+      lessonController = new YieldDemo.LessonsController
+      # lessonController.on 'lessonLoaded', (options) =>
+      #   @fire 'articleLoaded', @
+      #   YieldDemo.ArticlesController.get('sharedController').fire 'articleLoaded', @
+
+      @set 'lessonController', lessonController
+
+    @
 
   render: (options) ->
+    # return if not options
     view = super
     view.on 'ready', =>
-      @fire 'lessonLoaded', @get('activeLesson')
+      # @fire 'lessonLoaded', @get('activeLesson')
+      @fire 'articleLoaded', @
     view
+
+  index: (options) ->
 
   show: (options) ->
     @switchArticle options
 
+  reset: ->
+    @get('article.lessons').forEach (inactiveLesson) ->
+      inactiveLesson.unset 'active'
+
   viewLesson: (options) ->
     # Loading from the model will break the data binding.
     # Use the current article to preserve binding.
-    lesson = @get('article.lessons').find (lesson) =>
-      @set 'lesson', lesson if lesson.get('id') == parseInt(options.id, 10)
+    id = parseInt(options.id, 10)
+    lesson = @get('article.lessons').find (findLesson) =>
+      @set 'lesson', findLesson if findLesson.get('id') == id
 
     unless @get('lesson')
       return Batman.redirect '/home'
 
-    @get('article.lessons').forEach (inactiveLesson) ->
-      inactiveLesson.unset 'active'
+    @reset()
     lesson.set 'active', true
 
     # TODO: This is bad
-    @render into: 'article', source: 'articles/show', context: @
+    view = @render into: 'article', source: 'articles/show', context: @
     @get('lessonController').viewLesson lesson
 
   switchArticle: (options) ->
-    foundArticle = @get('articles').find (article) =>
-      @set('article', article) if article.get('id') == parseInt(options.id, 10)
-
-    console.log foundArticle
-    foundArticle.set 'active', true
+    id = parseInt(options.id, 10)
+    @get('articles').find (article) =>
+      @set('article', article) if article.get('id') == id
 
 class YieldDemo.LessonsController extends Batman.Controller
   routingKey: 'lessons'
 
+  setup: (options = {}) ->
+    @set 'ac', new YieldDemo.ArticlesController
+
   show: (options) ->
-    # ac = YieldDemo.ArticlesController.get('sharedController')
-    ac = @get('articlesController')
-    console.log 'ac', ac
-    console.log 'alternative', @articlesController
+    ac = @get('ac')
+    if ac == undefined
+      @setup()
+      ac = @get 'ac'
+    ac.setup lessonController: @
     ac.switchArticle id: options.articleId
     ac.viewLesson id: options.id
 
@@ -93,6 +106,8 @@ class YieldDemo.LessonsController extends Batman.Controller
     @render into: 'lesson', source: lesson.get('source'), context: @
 
   render: (options) ->
+    console.log 'lesson render', options
+    # NOTE: This renders actual lesson show.html if return is removed
     return if not options
     view = super
     view.on 'ready', =>

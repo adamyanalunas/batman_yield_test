@@ -16,3 +16,8 @@ h2 {
 aside {
   font-style: italic;
 }
+
+footer {
+  padding: .5em;
+  text-align: center;
+}
