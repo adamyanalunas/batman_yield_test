@@ -28,7 +28,7 @@ class @YieldDemo extends Batman.App
   # Substitute this with calls to a real db
   @::loadArticles = (cb) ->
     YieldDemo.Article.load (err, articles) ->
-      if not articles?.length
+      unless articles.length
         console.log 'Initial data creation'
         dogArticle = YieldDemo.Article::generateDogArticle()
         catArticle = YieldDemo.Article::generateCatArticle()

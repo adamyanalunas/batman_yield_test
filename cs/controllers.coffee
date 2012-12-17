@@ -36,7 +36,6 @@ class YieldDemo.ArticlesController extends Batman.Controller
 
   setup: (options = {}) ->
     @set 'articles', YieldDemo.Article.get('all')
-
     @set 'lessonController', options.lessonController
     unless options.lessonController
       lessonController = new YieldDemo.LessonsController
@@ -87,6 +86,7 @@ class YieldDemo.ArticlesController extends Batman.Controller
     @get('articles').find (article) =>
       @set('article', article) if article.get('id') == id
 
+
 class YieldDemo.LessonsController extends Batman.Controller
   routingKey: 'lessons'
 
@@ -106,7 +106,6 @@ class YieldDemo.LessonsController extends Batman.Controller
     @render into: 'lesson', source: lesson.get('source'), context: @
 
   render: (options) ->
-    console.log 'lesson render', options
     # NOTE: This renders actual lesson show.html if return is removed
     return if not options
     view = super
