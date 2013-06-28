@@ -1,7 +1,7 @@
 <h2><a data-route="routes.articles[article]" data-bind="article.title">Article View</a></h2>
 <!-- <aside class="muted" data-bind="article.blurb" data-hideif="article.activeLesson"></aside> -->
 
-<nav showif="article.lessons" class="navbar navbar-inverse">
+<nav data-showif="article.lessons.length" class="navbar navbar-inverse">
   <div class="navbar-inner">
     <ul class="nav">
       <li data-foreach-lesson="article.lessons" data-addclass-active="lesson.active">
